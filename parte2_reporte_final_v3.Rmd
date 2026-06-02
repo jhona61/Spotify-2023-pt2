@@ -1,0 +1,2010 @@
+---
+title: "Análisis Predictivo del Éxito Musical en Spotify 2023"
+author: "Quiñones Sánchez Jonathan Ezequiel"
+subtitle: Proyecto Parte 2 — Máquinas de Aprendizaje
+output:
+  html_document:
+    theme: default
+    highlight: null
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
+    number_sections: true
+    df_print: paged
+    code_folding: show
+    self_contained: true
+institution: Benemérita Universidad Autónoma de Puebla · Facultad de Ciencias de la Computación
+---
+
+```{css, echo=FALSE}
+/* ═══════════════════════════════════════════
+   IMPORTAR FUENTES
+═══════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,300&family=Bebas+Neue&display=swap');
+
+/* ═══════════════════════════════════════════
+   VARIABLES DE COLOR
+═══════════════════════════════════════════ */
+:root {
+  --green:        #1DB954;
+  --green-dark:   #148038;
+  --green-dim:    #1a4d2e;
+  --black:        #0a0a0a;
+  --surface:      #111111;
+  --surface-2:    #1a1a1a;
+  --surface-3:    #222222;
+  --border:       #2a2a2a;
+  --border-green: #1DB95440;
+  --text:         #e8e8e8;
+  --text-dim:     #888888;
+  --text-muted:   #555555;
+  --accent:       #1DB954;
+  --red:          #e84040;
+  --blue:         #4A9FDB;
+  --orange:       #ff6f00;
+  --purple:       #6a1b9a;
+}
+
+/* ═══════════════════════════════════════════
+   RESET Y BASE
+═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background-color: var(--black) !important;
+  color: var(--text) !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-weight: 300;
+  line-height: 1.75;
+  padding: 0 !important;
+  font-size: 18px !important;
+}
+
+.main-container {
+  background-color: var(--black) !important;
+  max-width: 1300px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 0 2rem 4rem !important;
+}
+
+/* ═══════════════════════════════════════════
+   OCULTAR TÍTULO / AUTHOR / SUBTITLE DE PANDOC
+═══════════════════════════════════════════ */
+h1.title, h3.subtitle, h4.author, h4.date,
+.title, .author, .date, .subtitle {
+  display: none !important;
+}
+
+/* ═══════════════════════════════════════════
+   PORTADA
+═══════════════════════════════════════════ */
+.cover-block {
+  background: linear-gradient(160deg, #0d1f14 0%, #0a0a0a 60%);
+  border-bottom: 1px solid var(--border-green);
+  padding: 5rem 2rem 4rem;
+  margin: 0 -2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.cover-block::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, #1DB95415 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.cover-tag {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  color: var(--green);
+  text-transform: uppercase;
+  margin-bottom: 1.6rem;
+  display: block;
+}
+
+.cover-badge {
+  display: inline-block;
+  background: #1DB95420;
+  border: 1px solid #1DB95460;
+  color: var(--green);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.8rem;
+  border-radius: 2px;
+  margin-bottom: 1.2rem;
+}
+
+.cover-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.8rem, 6vw, 4.4rem);
+  color: #ffffff;
+  line-height: 1.0;
+  letter-spacing: 0.02em;
+  margin-bottom: 1rem;
+}
+
+.cover-title span { color: var(--green); }
+
+.cover-subtitle {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.05rem;
+  color: var(--text-dim);
+  font-weight: 300;
+  margin-bottom: 2.5rem;
+  max-width: 560px;
+}
+
+.cover-stats-row {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+}
+
+.cover-stat {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  padding: 0.7rem 1.2rem;
+  border-radius: 2px;
+}
+
+.cover-stat-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.3rem;
+  color: var(--green);
+  font-weight: 700;
+  display: block;
+}
+
+.cover-stat-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cover-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.5rem;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+
+.cover-meta-item { display: flex; flex-direction: column; gap: 0.2rem; }
+
+.cover-meta-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.cover-meta-value { font-size: 0.88rem; color: var(--text); font-weight: 500; }
+
+/* ═══════════════════════════════════════════
+   TOC
+═══════════════════════════════════════════ */
+.tocify {
+  border: none !important;
+  background-color: transparent !important;
+  font-family: 'DM Sans', sans-serif !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 280px !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+}
+
+.tocify .list-group-item {
+  background-color: transparent !important;
+  color: var(--text-dim) !important;
+  border: none !important;
+  border-left: 2px solid var(--border) !important;
+  border-radius: 0 !important;
+  padding: 0.6rem 1.2rem !important;
+  font-size: 0.7rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.tocify .list-group-item:hover {
+  color: #ffffff !important;
+  background-color: var(--surface-2) !important;
+  border-left: 2px solid var(--text-dim) !important;
+}
+
+.tocify .list-group-item.active {
+  color: var(--green) !important;
+  background-color: #1DB95410 !important;
+  border-left: 2px solid var(--green) !important;
+  font-weight: 500 !important;
+  z-index: 1 !important;
+}
+
+.tocify .list-group-item:focus { outline: none !important; }
+
+.tocify .list-group-item[data-toc-level="3"] {
+  padding-left: 2rem !important;
+  font-size: 0.5rem !important;
+}
+
+/* ═══════════════════════════════════════════
+   HEADINGS
+═══════════════════════════════════════════ */
+h1, h2, h3, h4 {
+  font-family: 'DM Sans', sans-serif !important;
+  color: var(--text) !important;
+  font-weight: 700 !important;
+}
+
+h1 {
+  font-size: 2.4rem !important;
+  margin: 3rem 0 1rem !important;
+  padding-bottom: 0.6rem !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: #ffffff !important;
+}
+
+h1 .header-section-number {
+  font-family: 'Space Mono', monospace !important;
+  color: var(--green) !important;
+  font-size: 0.9em !important;
+  margin-right: 0.5rem !important;
+}
+
+h2 {
+  font-size: 1.8rem !important;
+  margin: 2rem 0 0.8rem !important;
+  color: var(--text) !important;
+}
+
+h2 .header-section-number {
+  font-family: 'Space Mono', monospace !important;
+  color: var(--green) !important;
+  font-size: 1.35em !important;
+  margin-right: 0.4rem !important;
+}
+
+h3 {
+  font-size: 1.4rem !important;
+  margin: 1.5rem 0 0.6rem !important;
+  color: var(--text-dim) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+/* ═══════════════════════════════════════════
+   PÁRRAFOS Y TEXTO
+═══════════════════════════════════════════ */
+p { color: var(--text); font-size: 1rem; line-height: 1.8; margin-bottom: 1rem; }
+strong { color: #ffffff; font-weight: 700; }
+em { color: var(--text-dim); }
+
+/* ═══════════════════════════════════════════
+   CÓDIGO
+═══════════════════════════════════════════ */
+pre, code { font-family: 'Space Mono', monospace !important; font-size: 1.0rem !important; }
+
+pre.r, pre.sourceCode {
+  background: #0d1a0f !important;
+  border: 1px solid var(--border-green) !important;
+  border-left: 3px solid var(--green) !important;
+  border-radius: 3px !important;
+  padding: 1.2rem 1.4rem !important;
+  overflow-x: auto !important;
+  margin: 1.2rem 0 !important;
+}
+
+code.r, code.sourceCode { background: transparent !important; color: #a8d8a8 !important; }
+
+:not(pre) > code {
+  background: #1a2e1a !important;
+  color: var(--green) !important;
+  padding: 0.15em 0.45em !important;
+  border-radius: 3px !important;
+  font-size: 0.8rem !important;
+}
+
+.hljs-keyword, .kw { color: #569cd6 !important; }
+.hljs-string, .st  { color: #ce9178 !important; }
+.hljs-number, .dv, .fl { color: #b5cea8 !important; }
+.hljs-comment, .co { color: #4d7a4d !important; font-style: italic !important; }
+.hljs-function, .fu { color: #dcdcaa !important; }
+.ot { color: #c586c0 !important; }
+
+/* ═══════════════════════════════════════════
+   TABLAS
+═══════════════════════════════════════════ */
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 1.5rem 0; font-family: 'DM Sans', sans-serif; }
+thead tr { background: var(--green-dim) !important; border-bottom: 2px solid var(--green) !important; }
+thead th { color: var(--green) !important; font-family: 'Space Mono', monospace !important; font-size: 0.68rem !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; padding: 0.75rem 1rem !important; text-align: left !important; font-weight: 400 !important; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+tbody tr:hover { background: var(--surface-2); }
+tbody td { padding: 0.65rem 1rem; color: var(--text); vertical-align: top; }
+tbody tr:nth-child(odd)  { background: #0f0f0f; }
+tbody tr:nth-child(even) { background: var(--black); }
+
+/* ═══════════════════════════════════════════
+   CALLOUTS
+═══════════════════════════════════════════ */
+.callout {
+  border-left: 3px solid var(--green);
+  background: #0d1f14;
+  padding: 1rem 1.4rem;
+  margin: 1.5rem 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.callout-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.15em;
+  color: var(--green);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.callout p { font-size: 0.98rem; color: var(--text); margin: 0; line-height: 1.7; }
+
+.callout-warning { border-left-color: #f0a500; background: #1a1500; }
+.callout-warning .callout-title { color: #f0a500; }
+
+.callout-insight { border-left-color: var(--blue); background: #0d1520; }
+.callout-insight .callout-title { color: var(--blue); }
+
+.callout-decision { border-left-color: var(--orange); background: #1a0f00; }
+.callout-decision .callout-title { color: var(--orange); }
+
+/* ═══════════════════════════════════════════
+   TABLA RESUMEN P1 (HTML personalizada)
+═══════════════════════════════════════════ */
+.p1-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+.p1-table th {
+  background: var(--green-dim);
+  color: var(--green);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.8rem 1.2rem;
+  text-align: left;
+}
+.p1-table td { padding: 0.75rem 1.2rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; color: var(--text); }
+.p1-table tr:nth-child(odd)  td { background: #0f0f0f; }
+.p1-table tr:nth-child(even) td { background: var(--black); }
+.p1-table .winner-row td { background: #0d1f14 !important; border-top: 1px solid var(--green); border-bottom: 1px solid var(--green); }
+.p1-table .winner-val { color: var(--green); font-weight: 700; font-family: 'Space Mono', monospace; }
+.p1-table .problem-val { color: #e84040; font-weight: 700; }
+.p1-table .neutral-val { color: var(--text-dim); font-family: 'Space Mono', monospace; }
+
+/* ═══════════════════════════════════════════
+   FASE BADGES
+═══════════════════════════════════════════ */
+.fase-badge {
+  display: inline-block;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.7rem;
+  border-radius: 2px;
+  margin-bottom: 0.8rem;
+}
+.fase-1 { background: #1DB95420; border: 1px solid #1DB95460; color: var(--green); }
+.fase-2 { background: #1565c020; border: 1px solid #1565c060; color: #64b5f6; }
+.fase-3 { background: #ff6f0020; border: 1px solid #ff6f0060; color: var(--orange); }
+
+/* ═══════════════════════════════════════════
+   MÉTRICAS
+═══════════════════════════════════════════ */
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.2rem; margin: 2rem 0; }
+
+.metric-card { background: var(--surface-2); border: 1px solid var(--border); border-top: 2px solid var(--green); padding: 1.2rem 1rem; border-radius: 4px; }
+.metric-card.blue  { border-top-color: #64b5f6; }
+.metric-card.orange { border-top-color: var(--orange); }
+.metric-card.red    { border-top-color: var(--red); }
+
+.metric-card-num { font-family: 'Space Mono', monospace; font-size: 2rem; color: var(--green); font-weight: 700; display: block; line-height: 1.1; }
+.metric-card.blue  .metric-card-num { color: #64b5f6; }
+.metric-card.orange .metric-card-num { color: var(--orange); }
+.metric-card.red    .metric-card-num { color: var(--red); }
+
+.metric-card-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.4rem; display: block; }
+.metric-card-sub   { font-size: 0.78rem; color: var(--text-dim); margin-top: 0.2rem; display: block; }
+
+/* ═══════════════════════════════════════════
+   MISC
+═══════════════════════════════════════════ */
+.fig-caption { font-size: 0.78rem; color: var(--text-dim); font-style: italic; text-align: center; margin: -0.8rem 0 1.5rem; padding: 0 2rem; }
+hr { border: none !important; border-top: 1px solid var(--border) !important; margin: 2.5rem 0 !important; }
+pre.output, pre:not(.sourceCode) { background: #0a0a0a !important; border: 1px solid var(--border) !important; border-left: 3px solid var(--text-muted) !important; color: #cccccc !important; font-size: 0.83rem !important; padding: 1rem 1.2rem !important; border-radius: 2px !important; overflow-x: auto !important; }
+ul, ol { padding-left: 1.5rem; margin-bottom: 1.5rem; }
+li { color: var(--text); font-size: 1rem; line-height: 1.75; margin-bottom: 0.3rem; }
+li strong { color: var(--green); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--black); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--green); }
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo      = TRUE,
+  warning   = FALSE,
+  message   = FALSE,
+  fig.align = "center",
+  fig.width = 9,
+  fig.height = 5,
+  dpi       = 150,
+  out.width = "100%"
+)
+```
+
+```{=html}
+<div class="cover-block">
+  <span class="cover-badge">Continuación · Parte 2</span>
+  <span class="cover-tag">Benemérita Universidad Autónoma de Puebla · Facultad de Ciencias de la Computación · Máquinas de Aprendizaje</span>
+
+  <div class="cover-title">
+    Feature Engineering,<br><span>Tuning</span> y<br>Modelos Avanzados
+  </div>
+
+  <div class="cover-subtitle">
+    Tres fases de mejora sistemática sobre los modelos baseline de la Parte 1:
+    enriquecimiento de variables, optimización de hiperparámetros y algoritmos
+    avanzados — XGBoost, Lasso, Ridge, SVM y Stacking.
+  </div>
+
+  <div class="cover-stats-row">
+    <div class="cover-stat"><span class="cover-stat-num">3</span><span class="cover-stat-label">Fases de mejora</span></div>
+    <div class="cover-stat"><span class="cover-stat-num">5</span><span class="cover-stat-label">Variables nuevas</span></div>
+    <div class="cover-stat"><span class="cover-stat-num">11</span><span class="cover-stat-label">Modelos Parte 2</span></div>
+    <div class="cover-stat"><span class="cover-stat-num">14</span><span class="cover-stat-label">Modelos torneo final</span></div>
+  </div>
+
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <span class="cover-meta-label">Autor</span>
+      <span class="cover-meta-value">Quiñones Sánchez Jonathan Ezequiel</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="cover-meta-label">Herramientas nuevas</span>
+      <span class="cover-meta-value">glmnet · xgboost · e1071 · caret CV · xgb.cv</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="cover-meta-label">Dataset</span>
+      <span class="cover-meta-value">Spotify Top Songs 2023 · 952 canciones · 24 variables</span>
+    </div>
+  </div>
+</div>
+```
+
+---
+
+# Contexto: Resultados de la Parte 1
+
+## ¿Qué se construyó en la Parte 1?
+
+La Parte 1 de este proyecto estableció la infraestructura analítica completa: carga y limpieza del dataset *Spotify Top Songs 2023*, análisis exploratorio de distribuciones y correlaciones, business intelligence sobre el comportamiento de artistas y estacionalidad, y un pipeline de modelado con tres algoritmos evaluados sobre el mismo 30% de datos de prueba. El objetivo era predecir el volumen de streams de una canción a partir de sus características medibles.
+
+El proceso de selección de variables utilizó regresión lineal completa seguida de comparación ANOVA, identificando ocho predictores estadísticamente significativos: `in_spotify_playlists`, `in_apple_playlists`, `in_spotify_charts`, `artist_count`, `released_year`, `in_shazam_charts`, `in_deezer_charts` y `released_day`. Estas ocho variables se convirtieron en la base de los tres modelos evaluados.
+
+## Resultados obtenidos
+
+```{r carga_p1, message=FALSE, warning=FALSE}
+setwd("C:/Users/jhoni/Documents/ML/proyecto")
+options(scipen = 999)
+
+library(dplyr); library(tidyr); library(ggplot2)
+library(caret); library(Metrics); library(randomForest)
+library(rpart); library(rpart.plot)
+library(glmnet); library(xgboost); library(e1071)
+library(scales); library(gridExtra); library(grid)
+
+# Carga de objetos de la Parte 1
+spotify_limpio        <- readRDS("p1_spotify_limpio.rds")
+datos_modelo_completo <- readRDS("p1_datos_modelo_completo.rds")
+datos_torneo          <- readRDS("p1_datos_torneo.rds")
+datos_train           <- readRDS("p1_datos_train.rds")
+datos_test            <- readRDS("p1_datos_test.rds")
+resultados_p1         <- readRDS("p1_resultados.rds")
+cuartiles             <- readRDS("p1_cuartiles.rds")
+load("p1_clasificar_exito.RData")
+
+# Helper R²
+r2_calc <- function(real, pred) {
+  1 - sum((real - pred)^2) / sum((real - mean(real))^2)
+}
+
+cat("Datos Parte 1 cargados.\n")
+cat("Train:", nrow(datos_train), "| Test:", nrow(datos_test), "\n\n")
+cat("Rangos de clasificación (cuartiles del dataset):\n")
+cat("  Bajo  < ", formatC(cuartiles[1], format="f", big.mark=",", digits=0), "\n")
+cat("  Medio < ", formatC(cuartiles[2], format="f", big.mark=",", digits=0), "\n")
+cat("  Alto  < ", formatC(cuartiles[3], format="f", big.mark=",", digits=0), "\n")
+cat("  Viral >= ", formatC(cuartiles[3], format="f", big.mark=",", digits=0), "\n\n")
+cat("Referencia Parte 1:\n")
+cat("  Reg. Lineal  → RMSE:", formatC(resultados_p1$lineal$rmse, format="f", big.mark=",", digits=0),
+    "| R²:", round(resultados_p1$lineal$r2 * 100, 2), "%\n")
+cat("  Árbol        → RMSE:", formatC(resultados_p1$arbol$rmse,  format="f", big.mark=",", digits=0),
+    "| R²:", round(resultados_p1$arbol$r2  * 100, 2), "%\n")
+cat("  Random Forest→ RMSE:", formatC(resultados_p1$rf$rmse,     format="f", big.mark=",", digits=0),
+    "| R²:", round(resultados_p1$rf$r2     * 100, 2), "%\n")
+```
+
+```{=html}
+<table class="p1-table">
+  <thead>
+    <tr>
+      <th>Modelo</th>
+      <th>RMSE</th>
+      <th>R²</th>
+      <th>Accuracy</th>
+      <th>Problema identificado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Regresión Lineal</td>
+      <td class="neutral-val">317,204,811</td>
+      <td class="neutral-val">69.56%</td>
+      <td class="neutral-val">54.23%</td>
+      <td>Relaciones no lineales no capturadas</td>
+    </tr>
+    <tr>
+      <td>Árbol de Decisión</td>
+      <td class="neutral-val">322,779,367</td>
+      <td class="neutral-val">68.48%</td>
+      <td class="neutral-val">48.59%</td>
+      <td class="problem-val">Sensitivity = 0 en clase "Bajo"</td>
+    </tr>
+    <tr class="winner-row">
+      <td><strong>Random Forest</strong></td>
+      <td class="winner-val">264,819,216</td>
+      <td class="winner-val">78.79%</td>
+      <td class="winner-val">68.66%</td>
+      <td>Brecha OOB (84.57%) vs Test (78.79%)</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+## ¿Por qué no fue suficiente?
+
+Tres problemas concretos justifican continuar con una Parte 2 estructurada:
+
+El árbol de decisión tuvo **Sensitivity = 0 en la clase "Bajo"**, lo que significa que nunca predijo correctamente una canción de bajo rendimiento. Esto no es un problema menor — en términos de negocio, un modelo que no puede identificar canciones que van a fallar tiene utilidad limitada para la industria.
+
+El Random Forest mostró una **brecha de casi 6 puntos** entre su R² interno (OOB = 84.57%) y su R² en datos de prueba independientes (78.79%). Esta diferencia es una señal de sobreajuste moderado: el modelo memorizó patrones del entrenamiento que no generalizan perfectamente.
+
+Más importante: los tres modelos usaron **exactamente las mismas ocho variables** sin ninguna transformación. Las relaciones entre plataformas (por ejemplo, qué tan viral es una canción en relación con su presencia en playlists) no estaban representadas en el dataset original.
+
+```{=html}
+<div class="callout callout-decision">
+  <span class="callout-title">Decisión metodológica</span>
+  <p>La Parte 2 se estructura en tres fases acumulativas para poder aislar el efecto de cada mejora. Primero se aplica Feature Engineering y se re-evalúan los modelos base sin cambiar nada más — esto mide el impacto puro de tener mejores variables. Luego se optimizan los hiperparámetros sobre ese dataset enriquecido — esto mide el impacto del tuning. Finalmente se introducen algoritmos más sofisticados sobre las mismas condiciones. Cada fase tiene su propia tabla comparativa para que la contribución de cada decisión sea verificable.</p>
+</div>
+```
+
+---
+ 
+# Fase 1 — Feature Engineering
+ 
+<span class="fase-badge fase-1">Fase 1 · Feature Engineering</span>
+ 
+## Motivación
+ 
+Las ocho variables seleccionadas en la Parte 1 describen la presencia de una canción en cada plataforma de forma **individual**. El problema es que esa granularidad pierde información relacional: no es lo mismo una canción con 50,000 playlists en Spotify si tiene 500 charts que si tiene 5. La primera está siendo recomendada algorítmicamente por editores; la segunda es viralmente demandada por los oyentes. Esa diferencia no existe en ninguna variable del dataset original — hay que construirla.
+ 
+El feature engineering parte de una pregunta concreta para cada variable nueva: **¿qué señal del comportamiento del oyente no está representada en los datos actuales?** No se trata de crear variables por el hecho de crearlas, sino de formalizar conocimiento del dominio en números que el modelo pueda utilizar.
+ 
+## Construcción de variables
+ 
+```{r construccion_fe}
+# Construcción de variables nuevas
+datos_fe <- datos_torneo %>%
+  mutate(
+
+    # ── VARIABLE 1: Presencia total cross-platform ──────────────
+    # Suma de playlists en Spotify + Apple.
+    # Una canción distribuida en ambas plataformas simultáneamente
+    # tiene mayor alcance que una concentrada en una sola.
+    total_playlists        = in_spotify_playlists + in_apple_playlists,
+
+    # ── VARIABLE 2: Índice de viralidad orgánica ─────────────────
+    # Charts activos dividido entre playlists pasivas.
+    # Un valor alto indica que los oyentes buscan la canción
+    # por iniciativa propia, no porque un editor la colocó
+    # en una playlist curada. Se suma 1 para evitar divisiones por cero.
+    ratio_charts_playlists = (in_spotify_charts + 1) / (in_spotify_playlists + 1),
+
+    # ── VARIABLE 3: Presión de demanda externa ────────────────────
+    # Shazam registra búsquedas de canciones escuchadas fuera
+    # del ecosistema digital — radio, televisión, espacios públicos.
+    ratio_shazam_playlists = (in_shazam_charts + 1) / (in_spotify_playlists + 1),
+
+    # ── VARIABLE 4: Score de popularidad ponderado ────────────────
+    # Agrega todas las señales de distribución disponibles con
+    # pesos calibrados según la correlación individual con streams
+    # observada en la Parte 1.
+    score_popularidad      = (in_spotify_playlists * 2) +
+                             (in_apple_playlists   * 1.5) +
+                             (in_spotify_charts    * 3) +
+                             (in_shazam_charts     * 1),
+
+    # ── VARIABLE 5: Antigüedad acumulada ─────────────────────────
+    # Las canciones más antiguas han tenido más tiempo de exposición.
+    antiguedad_anios       = 2023 - released_year
+  )
+
+cat("Variables originales en el dataset:", ncol(datos_torneo) - 1, "\n")
+cat("Variables con Feature Engineering:", ncol(datos_fe) - 1, "\n")
+cat("Variables nuevas construidas:      ", ncol(datos_fe) - ncol(datos_torneo), "\n")
+
+# Correlación de cada variable nueva con el target
+cor_fe <- cor(
+  datos_fe %>% select(streams, total_playlists, ratio_charts_playlists,
+                      ratio_shazam_playlists, score_popularidad, antiguedad_anios),
+  use = "complete.obs"
+)
+
+cat("\nCorrelación de variables nuevas con streams:\n\n")
+cor_resultado <- round(cor_fe["streams", -1], 3)
+for (nm in names(cor_resultado)) {
+  signo <- if (cor_resultado[nm] > 0) "  +" else "  "
+  cat(signo, formatC(cor_resultado[nm], width = 7), " —", nm, "\n")
+}
+```
+
+```{=html}
+<div class="callout">
+  <span class="callout-title">Las cinco variables construidas</span>
+  <p>
+    <strong>total_playlists</strong> — alcance combinado Spotify + Apple. Cuantifica distribución cross-platform en una sola cifra.<br><br>
+    <strong>ratio_charts_playlists</strong> — índice de viralidad orgánica. Distingue entre canciones que los usuarios buscan activamente y canciones que los editores colocan pasivamente.<br><br>
+    <strong>ratio_shazam_playlists</strong> — demanda fuera del ecosistema digital. Proxy de popularidad en medios tradicionales y espacios públicos.<br><br>
+    <strong>score_popularidad</strong> — síntesis ponderada de toda la información de distribución multiplataforma, con pesos calibrados según las correlaciones de la Parte 1.<br><br>
+    <strong>antiguedad_anios</strong> — tiempo de exposición acumulado hasta 2023. Captura el efecto de acumulación temporal que released_year no expresa en su escala original.
+  </p>
+</div>
+```
+ 
+## Análisis exploratorio de las variables nuevas
+ 
+### Distribuciones individuales
+ 
+Antes de conectar las variables nuevas con el target es importante entender su forma individual. Las distribuciones muy sesgadas pueden distorsionar los modelos lineales al dar demasiado peso a los valores extremos. Para los modelos de árbol este efecto es menor, pero sigue siendo relevante para interpretar correctamente los resultados.
+ 
+```{r distrib_fe, fig.height=7, fig.width=9}
+tema_fe <- theme_minimal() +
+  theme(
+    plot.title       = element_text(face = "bold", size = 11, color = "#ffffff"),
+    plot.subtitle    = element_text(size = 9, color = "#888888"),
+    axis.text        = element_text(color = "#888888"),
+    axis.title       = element_text(color = "#888888"),
+    panel.grid.major = element_line(color = "#2a2a2a"),
+    panel.grid.minor = element_blank(),
+    plot.background  = element_rect(fill = "#111111", color = NA),
+    panel.background = element_rect(fill = "#111111", color = NA)
+  )
+
+p_d1 <- ggplot(datos_fe, aes(x = total_playlists)) +
+  geom_histogram(fill = "#1DB954", color = "#0a0a0a", bins = 35, alpha = 0.9) +
+  scale_x_continuous(labels = scales::comma) +
+  labs(title    = "total_playlists",
+       subtitle = "Suma de playlists Spotify + Apple",
+       x = NULL, y = "Frecuencia") + tema_fe
+
+p_d2 <- ggplot(datos_fe, aes(x = ratio_charts_playlists)) +
+  geom_histogram(fill = "#0277bd", color = "#0a0a0a", bins = 35, alpha = 0.9) +
+  labs(title    = "ratio_charts_playlists",
+       subtitle = "Índice de viralidad orgánica",
+       x = NULL, y = "Frecuencia") + tema_fe
+
+p_d3 <- ggplot(datos_fe, aes(x = ratio_shazam_playlists)) +
+  geom_histogram(fill = "#6a1b9a", color = "#0a0a0a", bins = 35, alpha = 0.9) +
+  labs(title    = "ratio_shazam_playlists",
+       subtitle = "Demanda externa al streaming",
+       x = NULL, y = "Frecuencia") + tema_fe
+
+p_d4 <- ggplot(datos_fe, aes(x = score_popularidad)) +
+  geom_histogram(fill = "#ff6f00", color = "#0a0a0a", bins = 35, alpha = 0.9) +
+  scale_x_continuous(labels = scales::comma) +
+  labs(title    = "score_popularidad",
+       subtitle = "Score ponderado multiplataforma",
+       x = NULL, y = "Frecuencia") + tema_fe
+
+p_d5 <- ggplot(datos_fe, aes(x = antiguedad_anios)) +
+  geom_histogram(fill = "#e84040", color = "#0a0a0a", bins = 20, alpha = 0.9) +
+  labs(title    = "antiguedad_anios",
+       subtitle = "Años desde el lanzamiento hasta 2023",
+       x = NULL, y = "Frecuencia") + tema_fe
+
+gridExtra::grid.arrange(
+  p_d1, p_d2, p_d3, p_d4, p_d5,
+  ncol = 2,
+  top  = grid::textGrob(
+    "Distribución de las 5 variables de Feature Engineering",
+    gp = grid::gpar(fontface = "bold", fontsize = 13, col = "#ffffff")
+  )
+)
+```
+ 
+<p class="fig-caption">Figura 1 — Distribuciones de las cinco variables construidas. total_playlists y score_popularidad muestran sesgo fuerte a la derecha, esperado en datos de popularidad donde unos pocos artistas concentran la mayor exposición. Los ratios tienen distribuciones comprimidas en valores bajos, con colas largas de canciones con alta viralidad relativa. antiguedad_anios muestra concentración en lanzamientos recientes (2022-2023), reflejando el dominio del contenido nuevo en el Top de Spotify.</p>
+ 
+### Relación con el target
+ 
+El siguiente paso es verificar si las variables nuevas tienen relación observable con los streams. Se muestra la dispersión de cada variable nueva contra el target, con la correlación lineal calculada.
+ 
+```{r correlaciones_fe, fig.height=9, fig.width=9}
+vars_nuevas <- c("total_playlists", "ratio_charts_playlists",
+                 "ratio_shazam_playlists", "score_popularidad", "antiguedad_anios")
+
+colores_fe <- c(
+  total_playlists        = "#1DB954",
+  ratio_charts_playlists = "#0277bd",
+  ratio_shazam_playlists = "#6a1b9a",
+  score_popularidad      = "#ff6f00",
+  antiguedad_anios       = "#e84040"
+)
+
+plots_cor <- lapply(vars_nuevas, function(v) {
+  cor_v   <- round(cor(datos_fe[[v]], datos_fe$streams, use = "complete.obs"), 3)
+  color_v <- colores_fe[v]
+  color_subtitulo <- if (cor_v > 0) "#1DB954" else "#e84040"
+
+  ggplot(datos_fe, aes(x = .data[[v]], y = streams)) +
+    geom_point(alpha = 0.35, color = color_v, size = 1.8) +
+    geom_smooth(method = "lm", color = "white", linetype = "dashed",
+                se = FALSE, linewidth = 0.7) +
+    scale_x_continuous(labels = scales::comma) +
+    scale_y_continuous(labels = scales::comma) +
+    labs(title    = v,
+         subtitle = paste0("r = ", cor_v),
+         x = NULL, y = "Streams") +
+    tema_fe +
+    theme(
+      plot.subtitle = element_text(color = color_subtitulo, face = "bold", size = 10)
+    )
+})
+
+gridExtra::grid.arrange(
+  grobs = plots_cor,
+  ncol  = 2,
+  top   = grid::textGrob(
+    "Variables nuevas vs Streams — Dispersión y correlación lineal",
+    gp = grid::gpar(fontface = "bold", fontsize = 13, col = "#ffffff")
+  )
+)
+```
+ 
+<p class="fig-caption">Figura 2 — Dispersión de cada variable nueva contra streams. La correlación aparece en verde si es positiva y en rojo si es negativa. score_popularidad y total_playlists lideran con correlaciones superiores a 0.79. Los ratios muestran correlaciones negativas moderadas: las canciones con más streams absolutos están en tantas playlists que su ratio se diluye. Esta no-linealidad es exactamente lo que los árboles y XGBoost pueden aprovechar mejor que la regresión lineal.</p>
+ 
+### Matriz de correlación entre variables nuevas
+ 
+Con variables tan correlacionadas entre sí, es importante revisar la multicolinealidad antes de entrenar modelos lineales.
+ 
+```{r matriz_cor_fe}
+vars_matriz <- c("streams", "total_playlists", "ratio_charts_playlists",
+                 "ratio_shazam_playlists", "score_popularidad", "antiguedad_anios")
+
+mat_cor <- cor(datos_fe[, vars_matriz], use = "complete.obs")
+
+mat_long <- as.data.frame(mat_cor) %>%
+  mutate(Var1 = rownames(mat_cor)) %>%
+  pivot_longer(-Var1, names_to = "Var2", values_to = "correlacion") %>%
+  mutate(
+    orden1 = match(Var1, vars_matriz),
+    orden2 = match(Var2, vars_matriz)
+  ) %>%
+  filter(orden1 > orden2)
+
+ggplot(mat_long, aes(x = Var2, y = Var1, fill = correlacion)) +
+  geom_tile(color = "#0a0a0a", linewidth = 0.8) +
+  geom_text(aes(label = round(correlacion, 2)),
+            color = "white", size = 3.8, fontface = "bold") +
+  scale_fill_gradient2(
+    low      = "#0277bd",
+    mid      = "#1a1a1a",
+    high     = "#1DB954",
+    midpoint = 0,
+    limits   = c(-1, 1),
+    name     = "r"
+  ) +
+  scale_x_discrete(limits = vars_matriz[-length(vars_matriz)]) +
+  scale_y_discrete(limits = vars_matriz[-1]) +
+  labs(
+    title    = "Matriz de Correlación — Variables de Feature Engineering",
+    subtitle = "Triángulo inferior | Verde = correlación positiva | Azul = negativa",
+    x = NULL, y = NULL
+  ) +
+  tema_fe +
+  theme(
+    axis.text.x  = element_text(angle = 35, hjust = 1, size = 9),
+    axis.text.y  = element_text(size = 9),
+    legend.background = element_rect(fill = "#111111", color = NA),
+    legend.text       = element_text(color = "#888888"),
+    legend.title      = element_text(color = "#888888")
+  )
+```
+
+<p class="fig-caption">Figura 3 — Matriz de correlación entre las variables del dataset enriquecido. score_popularidad y total_playlists tienen una correlación entre sí de aproximadamente 0.97, lo que indica multicolinealidad severa. Para modelos lineales esto puede inflar los coeficientes; para modelos de árbol y XGBoost no es un problema — ambas variables pueden coexistir porque el árbol selecciona la más informativa en cada nodo de forma independiente.</p>
+ 
+### Poder discriminativo por categoría de éxito
+ 
+El análisis de correlación global puede ocultar patrones por segmento. Al separar las canciones en sus categorías de éxito (Bajo, Medio, Alto, Viral) se puede verificar si las variables nuevas discriminan entre grupos de rendimiento.
+ 
+```{r boxplot_fe, fig.height=7, fig.width=9}
+datos_fe_cat <- datos_fe %>%
+  mutate(categoria = factor(
+    clasificar_exito(streams),
+    levels = c("Bajo", "Medio", "Alto", "Viral")
+  ))
+
+paleta_cat <- c("Bajo"  = "#444444",
+                "Medio" = "#0277bd",
+                "Alto"  = "#1DB954",
+                "Viral" = "#ff6f00")
+
+bp1 <- ggplot(datos_fe_cat,
+              aes(x = categoria, y = score_popularidad, fill = categoria)) +
+  geom_boxplot(alpha = 0.75, outlier.color = "#888888",
+               outlier.alpha = 0.5, outlier.size = 1.5) +
+  scale_fill_manual(values = paleta_cat) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "score_popularidad", x = NULL, y = "Score") +
+  tema_fe + theme(legend.position = "none")
+
+bp2 <- ggplot(datos_fe_cat,
+              aes(x = categoria, y = total_playlists, fill = categoria)) +
+  geom_boxplot(alpha = 0.75, outlier.color = "#888888",
+               outlier.alpha = 0.5, outlier.size = 1.5) +
+  scale_fill_manual(values = paleta_cat) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "total_playlists", x = NULL, y = "Total Playlists") +
+  tema_fe + theme(legend.position = "none")
+
+bp3 <- ggplot(datos_fe_cat,
+              aes(x = categoria, y = ratio_charts_playlists, fill = categoria)) +
+  geom_boxplot(alpha = 0.75, outlier.color = "#888888",
+               outlier.alpha = 0.5, outlier.size = 1.5) +
+  scale_fill_manual(values = paleta_cat) +
+  labs(title = "ratio_charts_playlists", x = NULL, y = "Ratio") +
+  tema_fe + theme(legend.position = "none")
+
+bp4 <- ggplot(datos_fe_cat,
+              aes(x = categoria, y = antiguedad_anios, fill = categoria)) +
+  geom_boxplot(alpha = 0.75, outlier.color = "#888888",
+               outlier.alpha = 0.5, outlier.size = 1.5) +
+  scale_fill_manual(values = paleta_cat) +
+  labs(title = "antiguedad_anios", x = NULL, y = "Años") +
+  tema_fe + theme(legend.position = "none")
+
+gridExtra::grid.arrange(
+  bp1, bp2, bp3, bp4,
+  ncol = 2,
+  top  = grid::textGrob(
+    "Variables de FE segmentadas por categoría de éxito",
+    gp = grid::gpar(fontface = "bold", fontsize = 13, col = "#ffffff")
+  )
+)
+```
+ 
+<p class="fig-caption">Figura 4 — Boxplots por categoría de éxito. score_popularidad y total_playlists muestran el patrón más limpio: la mediana crece de forma consistente de Bajo a Viral, confirmando poder discriminativo real entre categorías. ratio_charts_playlists muestra el patrón opuesto — las canciones Virales tienen ratio bajo porque están saturadas de playlists, lo que diluye su índice de viralidad. antiguedad_anios revela que las canciones Virales tienden a ser más antiguas, con mayor tiempo de acumulación de streams.</p>
+ 
+```{=html}
+<div class="callout callout-insight">
+  <span class="callout-title">Insight analítico clave</span>
+  <p>El análisis por categoría expone una paradoja del dataset: <strong>ratio_charts_playlists tiene comportamiento inverso en canciones Virales</strong>. Una canción viral tiene charts altos, pero también tiene tantas playlists que el ratio se comprime. Esto significa que la variable es más útil para identificar canciones emergentes (Bajo/Medio con viralidad creciente) que para confirmar canciones ya establecidas como Virales. Los modelos de árbol capturarán esta lógica condicional de forma natural mediante particiones específicas del espacio de valores.</p>
+</div>
+```
+
+## Resultados: modelos base re-evaluados con FE
+
+Los tres modelos de la Parte 1 se re-entrenaron con los **mismos hiperparámetros** que en la Parte 1 — únicamente cambian las variables de entrada. Esto permite atribuir cualquier mejora exclusivamente al feature engineering.
+
+```{r particion_fe}
+set.seed(42)
+idx_fe         <- createDataPartition(datos_fe$streams, p = 0.70, list = FALSE)
+datos_train_fe <- datos_fe[ idx_fe, ]
+datos_test_fe  <- datos_fe[-idx_fe, ]
+
+cat("Partición FE — Train:", nrow(datos_train_fe),
+    "| Test:", nrow(datos_test_fe), "\n")
+```
+
+```{r lm_fe}
+# Regresión Lineal con FE
+modelo_lm_fe <- lm(streams ~ ., data = datos_train_fe)
+
+pred_lm_fe   <- predict(modelo_lm_fe, datos_test_fe)
+rmse_lm_fe   <- rmse(datos_test_fe$streams, pred_lm_fe)
+r2_lm_fe     <- r2_calc(datos_test_fe$streams, pred_lm_fe)
+
+cat("--- Regresión Lineal + FE ---\n")
+cat("RMSE:", formatC(rmse_lm_fe, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_lm_fe * 100, 2), "%\n")
+cat("Cambio vs Parte 1 — RMSE:",
+    formatC(resultados_p1$lineal$rmse - rmse_lm_fe, format="f", big.mark=",", digits=0),
+    "| R²: +", round((r2_lm_fe - resultados_p1$lineal$r2) * 100, 2), "pp\n")
+
+mat_lm_fe <- confusionMatrix(
+  factor(clasificar_exito(pred_lm_fe),         levels = c("Bajo","Medio","Alto","Viral")),
+  factor(clasificar_exito(datos_test_fe$streams), levels = c("Bajo","Medio","Alto","Viral"))
+)
+```
+
+```{r arbol_fe}
+# Árbol de Decisión con FE
+modelo_arbol_fe <- rpart(
+  streams ~ .,
+  data    = datos_train_fe,
+  method  = "anova",
+  control = rpart.control(cp = 0.01, minsplit = 20, minbucket = 7)
+)
+
+pred_arbol_fe   <- predict(modelo_arbol_fe, datos_test_fe)
+rmse_arbol_fe   <- rmse(datos_test_fe$streams, pred_arbol_fe)
+r2_arbol_fe     <- r2_calc(datos_test_fe$streams, pred_arbol_fe)
+
+cat("--- Árbol de Decisión + FE ---\n")
+cat("RMSE:", formatC(rmse_arbol_fe, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_arbol_fe * 100, 2), "%\n")
+cat("Cambio vs Parte 1 — RMSE:",
+    formatC(resultados_p1$arbol$rmse - rmse_arbol_fe, format="f", big.mark=",", digits=0),
+    "| R²: +", round((r2_arbol_fe - resultados_p1$arbol$r2) * 100, 2), "pp\n")
+
+mat_arbol_fe <- confusionMatrix(
+  factor(clasificar_exito(pred_arbol_fe),          levels = c("Bajo","Medio","Alto","Viral")),
+  factor(clasificar_exito(datos_test_fe$streams),  levels = c("Bajo","Medio","Alto","Viral"))
+)
+```
+
+```{r rf_fe}
+# Random Forest con FE
+mtry_fe <- tuneRF(
+  x        = datos_train_fe %>% select(-streams),
+  y        = datos_train_fe$streams,
+  ntreeTry = 300,
+  stepFactor = 1.5,
+  improve    = 0.01,
+  trace      = FALSE,
+  plot       = FALSE
+)
+mejor_mtry_fe <- mtry_fe[which.min(mtry_fe[, 2]), 1]
+cat("--- Random Forest + FE ---\n")
+cat("mtry seleccionado:", mejor_mtry_fe, "\n")
+
+set.seed(123)
+modelo_rf_fe <- randomForest(
+  streams ~ .,
+  data       = datos_train_fe,
+  ntree      = 500,
+  mtry       = mejor_mtry_fe,
+  importance = TRUE
+)
+
+pred_rf_fe   <- predict(modelo_rf_fe, datos_test_fe)
+rmse_rf_fe   <- rmse(datos_test_fe$streams, pred_rf_fe)
+r2_rf_fe     <- r2_calc(datos_test_fe$streams, pred_rf_fe)
+
+cat("RMSE:", formatC(rmse_rf_fe, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_rf_fe * 100, 2), "%\n")
+cat("Cambio vs Parte 1 — RMSE:",
+    formatC(resultados_p1$rf$rmse - rmse_rf_fe, format="f", big.mark=",", digits=0),
+    "| R²: +", round((r2_rf_fe - resultados_p1$rf$r2) * 100, 2), "pp\n")
+
+mat_rf_fe <- confusionMatrix(
+  factor(clasificar_exito(pred_rf_fe),             levels = c("Bajo","Medio","Alto","Viral")),
+  factor(clasificar_exito(datos_test_fe$streams),  levels = c("Bajo","Medio","Alto","Viral"))
+)
+```
+
+```{r importancia_rf_fe, fig.height=6}
+# Importancia de variables RF + FE
+imp_rf_fe          <- as.data.frame(importance(modelo_rf_fe))
+imp_rf_fe$Variable <- rownames(imp_rf_fe)
+
+ggplot(imp_rf_fe, aes(x = reorder(Variable, `%IncMSE`), y = `%IncMSE`)) +
+  geom_bar(stat = "identity", fill = "#1DB954", alpha = 0.85, color = "#0a0a0a") +
+  coord_flip() +
+  labs(
+    title    = "Importancia de Variables — RF + Feature Engineering",
+    subtitle = "¿Las variables nuevas aparecen en el ranking?",
+    x = "Variable", y = "% Incremento en MSE"
+  ) +
+  tema_fe
+```
+
+<p class="fig-caption">Figura 5 — Las variables de feature engineering aparecen en el ranking de importancia del Random Forest, validando que el modelo las utiliza activamente. El score_popularidad y total_playlists compiten con in_spotify_playlists por los primeros lugares.</p>
+
+```{r tabla_fase1, results='asis'}
+# Tabla comparativa Fase 1
+tabla_fase1 <- data.frame(
+  Modelo   = c("Reg. Lineal P1", "Árbol P1", "RF P1",
+               "Reg. Lineal + FE", "Árbol + FE", "RF + FE"),
+  RMSE     = c(resultados_p1$lineal$rmse, resultados_p1$arbol$rmse, resultados_p1$rf$rmse,
+               rmse_lm_fe, rmse_arbol_fe, rmse_rf_fe),
+  R2       = c(resultados_p1$lineal$r2, resultados_p1$arbol$r2, resultados_p1$rf$r2,
+               r2_lm_fe, r2_arbol_fe, r2_rf_fe) * 100,
+  Accuracy = c(resultados_p1$lineal$accuracy, resultados_p1$arbol$accuracy, resultados_p1$rf$accuracy,
+               mat_lm_fe$overall["Accuracy"],
+               mat_arbol_fe$overall["Accuracy"],
+               mat_rf_fe$overall["Accuracy"]) * 100
+)
+
+cat('<table class="p1-table" style="width:100%">',
+    '<thead><tr>',
+    '<th>Modelo</th><th>RMSE</th><th>R²</th><th>Accuracy</th><th>Mejora RMSE vs P1</th>',
+    '</tr></thead><tbody>')
+for (i in seq_len(nrow(tabla_fase1))) {
+  delta <- if (i <= 3) "—" else paste0("-", formatC(
+    c(resultados_p1$lineal$rmse, resultados_p1$arbol$rmse, resultados_p1$rf$rmse)[i-3] - tabla_fase1$RMSE[i],
+    format="f", big.mark=",", digits=0))
+  bg <- if (i <= 3) "background:#0f0f0f;color:#888888" else if (i == 6) "background:#0d1a0f;color:#1DB954;font-weight:700" else "background:#0d1a0f;color:#e8e8e8"
+  cat(sprintf('<tr style="%s"><td>%s</td><td style="text-align:right">%s</td><td style="text-align:right">%s</td><td style="text-align:right">%s</td><td style="text-align:right">%s</td></tr>',
+              bg,
+              tabla_fase1$Modelo[i],
+              formatC(tabla_fase1$RMSE[i], format="f", big.mark=",", digits=0),
+              paste0(round(tabla_fase1$R2[i], 2), "%"),
+              paste0(round(tabla_fase1$Accuracy[i], 2), "%"),
+              delta))
+}
+cat('</tbody></table>')
+```
+
+```{r grafico_fase1_rmse, fig.height=5}
+colores_fase1 <- c(
+  "Reg. Lineal P1"  = "#ffccbc", "Árbol P1"  = "#c8e6c9", "RF P1"  = "#b3e5fc",
+  "Reg. Lineal + FE"= "#e64a19", "Árbol + FE"= "#2e7d32", "RF + FE"= "#0277bd"
+)
+
+tabla_fase1$Modelo <- factor(
+  tabla_fase1$Modelo,
+  levels = tabla_fase1$Modelo[order(tabla_fase1$RMSE, decreasing = TRUE)]
+)
+
+ggplot(tabla_fase1, aes(x = Modelo, y = RMSE, fill = Modelo)) +
+  geom_bar(stat = "identity", alpha = 0.9, color = "black", width = 0.65) +
+  geom_text(aes(label = formatC(RMSE, format="f", big.mark=",", digits=0)),
+            hjust = -0.1, fontface = "bold", size = 3.5, color = "#e8e8e8") +
+  coord_flip() +
+  scale_fill_manual(values = colores_fase1) +
+  scale_y_continuous(labels = scales::comma, expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    title    = "Fase 1 — Impacto del Feature Engineering sobre modelos base",
+    subtitle = "Colores claros = Parte 1 sin FE | Colores sólidos = con FE",
+    x = NULL, y = "RMSE"
+  ) +
+  tema_fe + theme(legend.position = "none")
+```
+
+<p class="fig-caption">Figura 6 — El feature engineering redujo el RMSE en los tres modelos sin cambiar ningún hiperparámetro. El Random Forest es el que más se beneficia, confirmando que los algoritmos no lineales aprovechan mejor las variables derivadas.</p>
+
+```{=html}
+<div class="callout">
+  <span class="callout-title">Hallazgo Fase 1</span>
+  <p>El feature engineering mejoró los tres modelos usando exactamente los mismos hiperparámetros que en la Parte 1. El score_popularidad y total_playlists se consolidan en las primeras posiciones de importancia del Random Forest, validando que el modelo las utiliza activamente. Sin embargo, el problema de Sensitivity = 0 en la clase "Bajo" persiste en el árbol — eso requiere tuning del CP, no solo más variables.</p>
+</div>
+```
+
+---
+
+# Fase 2 — Tuning de Hiperparámetros
+
+<span class="fase-badge fase-2">Fase 2 · Tuning con Cross-Validation</span>
+
+## Por qué el tuning va después del FE
+
+La secuencia importa. Si se hace tuning antes del feature engineering, los hiperparámetros se optimizan para un dataset incompleto y hay que repetir el proceso. Al hacer FE primero, el tuning encuentra los parámetros óptimos para el dataset definitivo que se usará en producción.
+
+La herramienta de validación es **cross-validation de 5 folds**: el conjunto de entrenamiento se divide en 5 subconjuntos iguales, el modelo se entrena 5 veces (cada vez dejando uno fuera como validación) y el error se promedia. Esto produce una estimación más honesta que el OOB de Random Forest, que fue el que sobreestimó el rendimiento en la Parte 1.
+
+```{r control_cv}
+control_cv <- trainControl(
+  method      = "cv",
+  number      = 5,
+  verboseIter = FALSE
+)
+```
+
+## Regresión Lineal — selección de variables por Stepwise
+
+La regresión lineal no tiene hiperparámetros de complejidad como cp o mtry, pero sí puede mejorarse eliminando variables que agregan ruido. La selección **stepwise bidireccional** evalúa en cada paso si agregar o eliminar una variable mejora el criterio AIC (Akaike Information Criterion).
+
+```{r lm_step}
+modelo_lm_step <- step(
+  lm(streams ~ ., data = datos_train_fe),
+  direction = "both",
+  trace     = FALSE
+)
+
+pred_lm_step   <- predict(modelo_lm_step, datos_test_fe)
+rmse_lm_step   <- rmse(datos_test_fe$streams, pred_lm_step)
+r2_lm_step     <- r2_calc(datos_test_fe$streams, pred_lm_step)
+
+cat("--- Regresión Lineal + FE + Stepwise ---\n")
+cat("Variables seleccionadas:", length(coef(modelo_lm_step)) - 1, "\n")
+cat("RMSE:", formatC(rmse_lm_step, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_lm_step * 100, 2), "%\n")
+cat("Mejora vs FE sin tuning — RMSE:",
+    formatC(rmse_lm_fe - rmse_lm_step, format="f", big.mark=",", digits=0), "\n")
+
+mat_lm_step <- confusionMatrix(
+  factor(clasificar_exito(pred_lm_step),           levels = c("Bajo","Medio","Alto","Viral")),
+  factor(clasificar_exito(datos_test_fe$streams),  levels = c("Bajo","Medio","Alto","Viral"))
+)
+```
+
+## Árbol de Decisión — tuning del CP
+
+El CP = 0.01 usado en la Parte 1 fue una decisión arbitraria. La CV evaluó siete valores distintos y seleccionó el que minimiza el error en datos no vistos.
+
+```{r arbol_tuned, fig.height=5}
+grid_cp <- expand.grid(
+  cp = c(0.0001, 0.0005, 0.001, 0.003, 0.005, 0.008, 0.01)
+)
+
+set.seed(42)
+modelo_arbol_tuned <- train(
+  streams ~ .,
+  data      = datos_train_fe,
+  method    = "rpart",
+  tuneGrid  = grid_cp,
+  trControl = control_cv,
+  metric    = "RMSE"
+)
+
+cat("--- Árbol de Decisión + FE + CV ---\n")
+cat("CP óptimo:", modelo_arbol_tuned$bestTune$cp, "\n")
+
+ggplot(modelo_arbol_tuned) +
+  labs(
+    title    = "Tuning del Árbol — CP óptimo por CV",
+    subtitle = paste0("CP seleccionado: ", round(modelo_arbol_tuned$bestTune$cp, 5)),
+    x = "Complexity Parameter (CP)", y = "RMSE (Cross-Validation)"
+  ) +
+  tema_fe
+```
+
+<p class="fig-caption">Figura 7 — La curva de CV muestra cómo el RMSE varía con el CP. El mínimo está en CP = 0.0001, cien veces más pequeño que el valor de la Parte 1. Un CP tan bajo produce un árbol más profundo que puede distinguir patrones más finos — incluyendo la clase "Bajo" que antes tenía Sensitivity = 0.</p>
+
+```{r arbol_tuned_eval}
+pred_arbol_tuned   <- predict(modelo_arbol_tuned, datos_test_fe)
+rmse_arbol_tuned   <- rmse(datos_test_fe$streams, pred_arbol_tuned)
+r2_arbol_tuned     <- r2_calc(datos_test_fe$streams, pred_arbol_tuned)
+
+cat("RMSE:", formatC(rmse_arbol_tuned, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_arbol_tuned * 100, 2), "%\n")
+cat("Mejora vs FE sin tuning — RMSE:",
+    formatC(rmse_arbol_fe - rmse_arbol_tuned, format="f", big.mark=",", digits=0), "\n")
+
+mat_arbol_tuned <- confusionMatrix(
+  factor(clasificar_exito(pred_arbol_tuned),       levels = c("Bajo","Medio","Alto","Viral")),
+  factor(clasificar_exito(datos_test_fe$streams),  levels = c("Bajo","Medio","Alto","Viral"))
+)
+
+ggplot(as.data.frame(mat_arbol_tuned$table),
+       aes(x = Reference, y = Prediction, fill = Freq)) +
+  geom_tile(color = "white", linewidth = 0.8) +
+  geom_text(aes(label = Freq), size = 6, fontface = "bold", color = "black") +
+  scale_fill_gradient(low = "#e8f5e9", high = "#1DB954") +
+  labs(
+    title    = "Matriz de Confusión — Árbol Tuneado",
+    subtitle = paste0("Accuracy: ",
+                      round(mat_arbol_tuned$overall["Accuracy"] * 100, 2), "%"),
+    x = "Categoría Real", y = "Categoría Predicha", fill = "Frecuencia"
+  ) +
+  tema_fe
+```
+
+<p class="fig-caption">Figura 8 — El árbol tuneado resuelve el problema crítico: la clase "Bajo" ahora tiene Sensitivity mayor a cero, lo que significa que el modelo puede identificar canciones de bajo rendimiento. La accuracy subió de 48.59% a `r round(mat_arbol_tuned$overall["Accuracy"] * 100, 2)`%.</p>
+
+## Random Forest — tuning del mtry por CV
+
+```{r rf_tuned, fig.height=5}
+grid_rf <- expand.grid(mtry = c(2, 3, 4, 5, 6, 7, 8, 9, 10))
+
+set.seed(42)
+modelo_rf_tuned <- train(
+  streams ~ .,
+  data       = datos_train_fe,
+  method     = "rf",
+  tuneGrid   = grid_rf,
+  trControl  = control_cv,
+  ntree      = 500,
+  importance = TRUE
+)
+
+cat("--- Random Forest + FE + CV ---\n")
+cat("mtry óptimo por CV:", modelo_rf_tuned$bestTune$mtry, "\n")
+
+ggplot(modelo_rf_tuned) +
+  labs(
+    title    = "Random Forest — Tuning de mtry por CV",
+    subtitle = paste0("mtry óptimo: ", modelo_rf_tuned$bestTune$mtry),
+    x = "mtry (variables por split)", y = "RMSE (Cross-Validation)"
+  ) +
+  tema_fe
+```
+
+<p class="fig-caption">Figura 9 — La CV evaluó valores de mtry de 2 a 10. Valores más altos de mtry aumentan la correlación entre árboles, reduciendo la diversidad del bosque y su capacidad de generalización.</p>
+
+```{r rf_tuned_eval, fig.height=6}
+pred_rf_tuned   <- predict(modelo_rf_tuned, datos_test_fe)
+rmse_rf_tuned   <- rmse(datos_test_fe$streams, pred_rf_tuned)
+r2_rf_tuned     <- r2_calc(datos_test_fe$streams, pred_rf_tuned)
+
+cat("RMSE:", formatC(rmse_rf_tuned, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_rf_tuned * 100, 2), "%\n")
+cat("Mejora vs FE sin tuning — RMSE:",
+    formatC(rmse_rf_fe - rmse_rf_tuned, format="f", big.mark=",", digits=0), "\n")
+
+imp_rf_tuned          <- as.data.frame(importance(modelo_rf_tuned$finalModel))
+imp_rf_tuned$Variable <- rownames(imp_rf_tuned)
+
+ggplot(imp_rf_tuned, aes(x = reorder(Variable, `%IncMSE`), y = `%IncMSE`)) +
+  geom_bar(stat = "identity", fill = "#0277bd", alpha = 0.85, color = "#0a0a0a") +
+  coord_flip() +
+  labs(
+    title    = "Importancia de Variables — RF Tuneado",
+    subtitle = paste0("mtry = ", modelo_rf_tuned$bestTune$mtry),
+    x = "Variable", y = "% Incremento en MSE"
+  ) +
+  tema_fe
+
+mat_rf_tuned <- confusionMatrix(
+  factor(clasificar_exito(pred_rf_tuned),          levels = c("Bajo","Medio","Alto","Viral")),
+  factor(clasificar_exito(datos_test_fe$streams),  levels = c("Bajo","Medio","Alto","Viral"))
+)
+
+ggplot(as.data.frame(mat_rf_tuned$table),
+       aes(x = Reference, y = Prediction, fill = Freq)) +
+  geom_tile(color = "white", linewidth = 0.8) +
+  geom_text(aes(label = Freq), size = 6, fontface = "bold", color = "black") +
+  scale_fill_gradient(low = "#e3f2fd", high = "#0277bd") +
+  labs(
+    title    = "Matriz de Confusión — Random Forest Tuneado",
+    subtitle = paste0("Accuracy: ",
+                      round(mat_rf_tuned$overall["Accuracy"] * 100, 2), "%"),
+    x = "Categoría Real", y = "Categoría Predicha", fill = "Frecuencia"
+  ) +
+  tema_fe
+```
+
+## Tabla comparativa Fase 2
+
+```{r tabla_fase2, results='asis'}
+tabla_fase2 <- data.frame(
+  Fase   = c("Fase 1","Fase 1","Fase 1","Fase 2","Fase 2","Fase 2"),
+  Modelo = c("Reg. Lineal + FE", "Árbol + FE", "RF + FE",
+             "Reg. Lineal Tuneada", "Árbol Tuneado", "RF Tuneado"),
+  RMSE   = c(rmse_lm_fe, rmse_arbol_fe, rmse_rf_fe,
+             rmse_lm_step, rmse_arbol_tuned, rmse_rf_tuned),
+  R2     = c(r2_lm_fe, r2_arbol_fe, r2_rf_fe,
+             r2_lm_step, r2_arbol_tuned, r2_rf_tuned) * 100,
+  Accuracy = c(mat_lm_fe$overall["Accuracy"],
+               mat_arbol_fe$overall["Accuracy"],
+               mat_rf_fe$overall["Accuracy"],
+               mat_lm_step$overall["Accuracy"],
+               mat_arbol_tuned$overall["Accuracy"],
+               mat_rf_tuned$overall["Accuracy"]) * 100
+)
+
+cat('<table class="p1-table" style="width:100%">',
+    '<thead><tr>',
+    '<th>Fase</th><th>Modelo</th><th>RMSE</th><th>R²</th><th>Accuracy</th>',
+    '</tr></thead><tbody>')
+for (i in seq_len(nrow(tabla_fase2))) {
+  bg <- if (i <= 3) "background:#0f0f0f;color:#888888" else if (i == 6) "background:#0d1a0f;color:#1DB954;font-weight:700" else "background:#0d1a0f;color:#e8e8e8"
+  cat(sprintf('<tr style="%s"><td>%s</td><td>%s</td><td style="text-align:right">%s</td><td style="text-align:right">%s</td><td style="text-align:right">%s</td></tr>',
+              bg,
+              tabla_fase2$Fase[i],
+              tabla_fase2$Modelo[i],
+              formatC(tabla_fase2$RMSE[i], format="f", big.mark=",", digits=0),
+              paste0(round(tabla_fase2$R2[i], 2), "%"),
+              paste0(round(tabla_fase2$Accuracy[i], 2), "%")))
+}
+cat('</tbody></table>')
+```
+
+```{r grafico_fase2_rmse, fig.height=5}
+colores_fase2 <- c(
+  "Reg. Lineal + FE"   = "#ffccbc", "Árbol + FE"   = "#c8e6c9", "RF + FE"   = "#b3e5fc",
+  "Reg. Lineal Tuneada"= "#e64a19", "Árbol Tuneado"= "#2e7d32", "RF Tuneado"= "#0277bd"
+)
+
+tabla_fase2$Modelo <- factor(
+  tabla_fase2$Modelo,
+  levels = tabla_fase2$Modelo[order(tabla_fase2$RMSE, decreasing = TRUE)]
+)
+
+ggplot(tabla_fase2, aes(x = Modelo, y = RMSE, fill = Modelo)) +
+  geom_bar(stat = "identity", alpha = 0.9, color = "black", width = 0.65) +
+  geom_text(aes(label = formatC(RMSE, format="f", big.mark=",", digits=0)),
+            hjust = -0.1, fontface = "bold", size = 3.5, color = "#e8e8e8") +
+  coord_flip() +
+  scale_fill_manual(values = colores_fase2) +
+  scale_y_continuous(labels = scales::comma, expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    title    = "Fase 2 — Impacto del Tuning sobre modelos con FE",
+    subtitle = "Colores claros = FE sin tuning | Colores sólidos = FE + tuning",
+    x = NULL, y = "RMSE"
+  ) +
+  tema_fe + theme(legend.position = "none")
+```
+
+<p class="fig-caption">Figura 10 — El tuning mejora los tres modelos respecto a la Fase 1. La ganancia más significativa es la del árbol, que resuelve el problema estructural de Sensitivity = 0. El RF tuneado consolida la mejor posición entre los modelos base optimizados.</p>
+
+```{=html}
+<div class="callout">
+  <span class="callout-title">Hallazgo Fase 2</span>
+  <p>El tuning por CV aportó mejoras adicionales sobre el FE en los tres modelos. El cambio más relevante no es numérico sino estructural: el árbol de decisión ahora clasifica correctamente canciones de bajo rendimiento, corrigiendo el defecto más grave de la Parte 1. La brecha OOB vs Test en el Random Forest también se redujo, indicando menos sobreajuste. Sin embargo, los tres modelos base — incluso optimizados — tienen un techo de complejidad que los algoritmos de la Fase 3 pueden superar.</p>
+</div>
+```
+
+---
+
+# Fase 3 — Modelos Avanzados
+
+<span class="fase-badge fase-3">Fase 3 · Modelos Avanzados</span>
+
+## Lasso y Ridge
+
+Lasso y Ridge son extensiones de la regresión lineal que agregan una penalización sobre los coeficientes para evitar sobreajuste. **Lasso** (norma L1) puede llevar coeficientes exactamente a cero, funcionando como selección automática de variables. **Ridge** (norma L2) reduce todos los coeficientes pero no elimina ninguno, siendo más estable cuando hay multicolinealidad.
+
+La razón para incluirlos en la Fase 3 es establecer con precisión el techo del enfoque lineal: si Lasso y Ridge no superan a la Regresión Lineal tuneada, queda demostrado que el problema tiene estructura no lineal irreducible.
+
+```{r lasso}
+x_train <- model.matrix(streams ~ ., data = datos_train_fe)[, -1]
+y_train <- datos_train_fe$streams
+x_test  <- model.matrix(streams ~ ., data = datos_test_fe)[, -1]
+y_test  <- datos_test_fe$streams
+
+set.seed(42)
+cv_lasso     <- cv.glmnet(x_train, y_train, alpha = 1, nfolds = 5)
+lambda_lasso <- cv_lasso$lambda.min
+
+cat("--- Lasso ---\n")
+cat("Lambda óptimo:", round(lambda_lasso, 0), "\n")
+coef_lasso <- coef(cv_lasso, s = "lambda.min")
+vars_cero  <- sum(coef_lasso[-1] == 0)
+cat(" ", vars_cero, "de", nrow(coef_lasso) - 1, "variables llevadas a cero\n")
+
+plot(cv_lasso, main = "Lasso — Selección de Lambda por CV")
+
+pred_lasso   <- as.vector(predict(cv_lasso, s = lambda_lasso, newx = x_test))
+rmse_lasso   <- rmse(y_test, pred_lasso)
+r2_lasso     <- r2_calc(y_test, pred_lasso)
+
+cat("RMSE:", formatC(rmse_lasso, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_lasso * 100, 2), "%\n")
+
+mat_lasso <- confusionMatrix(
+  factor(clasificar_exito(pred_lasso),  levels = c("Bajo","Medio","Alto","Viral")),
+  factor(clasificar_exito(y_test),      levels = c("Bajo","Medio","Alto","Viral"))
+)
+```
+
+<p class="fig-caption">Figura 11 — Curva de CV para selección de lambda en Lasso. El eje X muestra log(lambda); la línea izquierda marca el lambda óptimo. Los números en la parte superior indican cuántas variables permanecen activas a cada nivel de penalización.</p>
+
+```{r ridge}
+set.seed(42)
+cv_ridge     <- cv.glmnet(x_train, y_train, alpha = 0, nfolds = 5)
+lambda_ridge <- cv_ridge$lambda.min
+
+cat("--- Ridge ---\n")
+cat("Lambda óptimo:", round(lambda_ridge, 0), "\n")
+
+plot(cv_ridge, main = "Ridge — Selección de Lambda por CV")
+
+pred_ridge   <- as.vector(predict(cv_ridge, s = lambda_ridge, newx = x_test))
+rmse_ridge   <- rmse(y_test, pred_ridge)
+r2_ridge     <- r2_calc(y_test, pred_ridge)
+
+cat("RMSE:", formatC(rmse_ridge, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_ridge * 100, 2), "%\n")
+
+mat_ridge <- confusionMatrix(
+  factor(clasificar_exito(pred_ridge), levels = c("Bajo","Medio","Alto","Viral")),
+  factor(clasificar_exito(y_test),     levels = c("Bajo","Medio","Alto","Viral"))
+)
+```
+
+<p class="fig-caption">Figura 12 — Curva de CV para Ridge. A diferencia de Lasso, el número de variables activas permanece constante porque Ridge nunca elimina variables completamente.</p>
+
+```{r coef_lasso_ridge, fig.height=6}
+coef_l <- as.data.frame(as.matrix(coef(cv_lasso, s = "lambda.min")))
+coef_r <- as.data.frame(as.matrix(coef(cv_ridge, s = "lambda.min")))
+
+coef_comp <- data.frame(
+  Variable    = rownames(coef_l)[-1],
+  Lasso       = coef_l[-1, 1],
+  Ridge       = coef_r[-1, 1]
+) %>%
+  pivot_longer(cols = c(Lasso, Ridge), names_to = "Modelo", values_to = "Coeficiente")
+
+ggplot(coef_comp, aes(x = reorder(Variable, abs(Coeficiente)),
+                      y = Coeficiente, fill = Modelo)) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.85, color = "black") +
+  coord_flip() +
+  scale_fill_manual(values = c("Lasso" = "#ff7043", "Ridge" = "#0277bd")) +
+  labs(
+    title    = "Coeficientes: Lasso vs Ridge",
+    subtitle = "Barras ausentes en Lasso = variables eliminadas (coeficiente = 0)",
+    x = "Variable", y = "Coeficiente"
+  ) +
+  tema_fe +
+  theme(legend.background = element_rect(fill = "#111111", color = NA),
+        legend.text       = element_text(color = "#888888"))
+```
+
+<p class="fig-caption">Figura 13 — Comparativa de coeficientes. Las barras ausentes en Lasso (naranja) son variables que el algoritmo eliminó automáticamente por considerarlas redundantes. Ridge (azul) las mantiene todas pero reducidas.</p>
+
+```{r metricas_lasso_ridge}
+cat("Lasso — RMSE:", formatC(rmse_lasso, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_lasso * 100, 2), "%\n")
+cat("Ridge — RMSE:", formatC(rmse_ridge, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_ridge * 100, 2), "%\n")
+cat("Ref. Reg. Lineal P1 — RMSE:",
+    formatC(resultados_p1$lineal$rmse, format="f", big.mark=",", digits=0),
+    "| R²:", round(resultados_p1$lineal$r2 * 100, 2), "%\n")
+```
+
+El resultado confirma la hipótesis: Lasso y Ridge no superan a la Regresión Lineal de la Parte 1. Esto no es un fracaso — es evidencia de que el problema tiene estructura no lineal que ninguna extensión de regresión puede resolver, independientemente de la regularización aplicada.
+
+## XGBoost
+
+XGBoost construye árboles en **secuencia**: cada árbol nuevo aprende a corregir los errores específicos del árbol anterior mediante descenso por gradiente. El proceso de tuning se divide en dos fases para hacerlo computacionalmente eficiente: primero se encuentra el número óptimo de árboles con CV y early stopping, luego se busca la profundidad y tasa de aprendizaje óptimas con grid search.
+
+```{r xgb_setup}
+escala_xgb    <- 1e6
+streams_train <- datos_train_fe$streams / escala_xgb
+streams_test  <- datos_test_fe$streams  / escala_xgb
+
+x_train_mat <- as.matrix(datos_train_fe %>% select(-streams))
+x_test_mat  <- as.matrix(datos_test_fe  %>% select(-streams))
+
+dtrain <- xgb.DMatrix(data = x_train_mat, label = streams_train)
+dtest  <- xgb.DMatrix(data = x_test_mat,  label = streams_test)
+
+# Fase A: nrounds óptimo con CV
+params_cv <- list(
+  objective        = "reg:squarederror",
+  eval_metric      = "rmse",
+  max_depth        = 5,
+  eta              = 0.05,
+  subsample        = 0.8,
+  colsample_bytree = 0.8,
+  min_child_weight = 1
+)
+
+set.seed(42)
+cv_xgb <- xgb.cv(
+  params                = params_cv,
+  data                  = dtrain,
+  nrounds               = 500,
+  nfold                 = 5,
+  early_stopping_rounds = 30,
+  verbose               = 0
+)
+
+mejor_nrounds <- which.min(cv_xgb$evaluation_log$test_rmse_mean)
+cat("nrounds óptimo (CV):", mejor_nrounds, "\n")
+```
+
+```{r xgb_curva, fig.height=5}
+cv_log <- cv_xgb$evaluation_log
+ggplot(cv_log, aes(x = iter)) +
+  geom_line(aes(y = train_rmse_mean, color = "Train"), linewidth = 0.8) +
+  geom_line(aes(y = test_rmse_mean,  color = "CV Test"), linewidth = 0.8) +
+  geom_vline(xintercept = mejor_nrounds, color = "white",
+             linetype = "dashed", linewidth = 0.7) +
+  scale_color_manual(values = c("Train" = "#1DB954", "CV Test" = "#ff6f00")) +
+  labs(
+    title    = "XGBoost — Curva de Aprendizaje",
+    subtitle = paste0("nrounds óptimo: ", mejor_nrounds),
+    x = "Número de Árboles", y = "RMSE (millones de streams)", color = NULL
+  ) +
+  tema_fe +
+  theme(legend.background = element_rect(fill = "#111111", color = NA),
+        legend.text       = element_text(color = "#888888"))
+```
+
+<p class="fig-caption">Figura 14 — Curva de aprendizaje de XGBoost. La línea verde (Train) desciende continuamente porque el modelo siempre puede ajustarse más al entrenamiento. La línea naranja (CV Test) marca el punto donde agregar más árboles deja de mejorar la generalización — ese es el nrounds óptimo.</p>
+
+```{r xgb_grid}
+# Fase B: grid search max_depth y eta
+grid_xgb <- expand.grid(max_depth = c(3, 5, 7), eta = c(0.01, 0.05, 0.1))
+resultados_grid_xgb <- data.frame()
+
+for (i in seq_len(nrow(grid_xgb))) {
+  p_i <- list(
+    objective        = "reg:squarederror",
+    eval_metric      = "rmse",
+    max_depth        = grid_xgb$max_depth[i],
+    eta              = grid_xgb$eta[i],
+    subsample        = 0.8,
+    colsample_bytree = 0.8,
+    min_child_weight = 1
+  )
+  set.seed(42)
+  cv_i <- xgb.cv(params = p_i, data = dtrain, nrounds = 300,
+                 nfold = 5, early_stopping_rounds = 20, verbose = 0)
+  resultados_grid_xgb <- rbind(resultados_grid_xgb, data.frame(
+    max_depth    = grid_xgb$max_depth[i],
+    eta          = grid_xgb$eta[i],
+    best_nrounds = which.min(cv_i$evaluation_log$test_rmse_mean),
+    rmse_cv      = min(cv_i$evaluation_log$test_rmse_mean)
+  ))
+  cat("  depth=", grid_xgb$max_depth[i], "| eta=", grid_xgb$eta[i],
+      "| nrounds=", which.min(cv_i$evaluation_log$test_rmse_mean),
+      "| RMSE:", round(min(cv_i$evaluation_log$test_rmse_mean), 4), "\n")
+}
+
+mejor_xgb <- resultados_grid_xgb[which.min(resultados_grid_xgb$rmse_cv), ]
+cat("\nMejor configuración XGBoost:\n"); print(mejor_xgb)
+```
+
+```{r xgb_grid_plot, fig.height=5}
+ggplot(resultados_grid_xgb,
+       aes(x = factor(eta), y = rmse_cv,
+           color = factor(max_depth), group = factor(max_depth))) +
+  geom_line(linewidth = 1) + geom_point(size = 3) +
+  scale_color_manual(values = c("3" = "#1DB954", "5" = "#0277bd", "7" = "#ff6f00")) +
+  labs(title = "XGBoost — Grid Search: max_depth vs eta",
+       subtitle = "Menor RMSE CV = mejor combinación",
+       x = "Learning Rate (eta)", y = "RMSE CV (M streams)", color = "max_depth") +
+  tema_fe +
+  theme(legend.background = element_rect(fill = "#111111", color = NA),
+        legend.text       = element_text(color = "#888888"))
+```
+
+<p class="fig-caption">Figura 15 — Grid search sobre profundidad y tasa de aprendizaje. Cada línea representa una profundidad de árbol. El punto más bajo de la línea ganadora es la combinación óptima. Árboles más profundos no necesariamente ganan — la relación entre profundidad y tasa de aprendizaje es compensatoria.</p>
+
+```{r xgb_final, fig.height=5}
+params_xgb <- list(
+  objective        = "reg:squarederror",
+  eval_metric      = "rmse",
+  max_depth        = mejor_xgb$max_depth,
+  eta              = mejor_xgb$eta,
+  subsample        = 0.8,
+  colsample_bytree = 0.8,
+  min_child_weight = 1
+)
+
+set.seed(42)
+modelo_xgb <- xgb.train(
+  params    = params_xgb,
+  data      = dtrain,
+  nrounds   = mejor_xgb$best_nrounds,
+  watchlist = list(train = dtrain, test = dtest),
+  verbose   = 0
+)
+
+pred_xgb   <- predict(modelo_xgb, dtest) * escala_xgb
+rmse_xgb   <- rmse(datos_test_fe$streams, pred_xgb)
+r2_xgb     <- r2_calc(datos_test_fe$streams, pred_xgb)
+
+cat("XGBoost Final\n")
+cat("RMSE:", formatC(rmse_xgb, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_xgb * 100, 2), "%\n")
+
+ggplot(data.frame(Real = datos_test_fe$streams, Predicho = pred_xgb),
+       aes(x = Real, y = Predicho)) +
+  geom_point(alpha = 0.5, color = "#ff6f00", size = 2) +
+  geom_abline(slope = 1, intercept = 0, color = "white", linetype = "dashed", linewidth = 1) +
+  scale_x_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "XGBoost: Valores Reales vs Predichos",
+       subtitle = paste0("RMSE: ", formatC(rmse_xgb, format="f", big.mark=",", digits=0),
+                         "  |  R²: ", round(r2_xgb * 100, 2), "%"),
+       x = "Streams Reales", y = "Streams Predichos") +
+  tema_fe
+```
+
+<p class="fig-caption">Figura 16 — Valores reales vs predichos de XGBoost. La diagonal punteada representa la predicción perfecta. La dispersión en valores extremos es inevitable: las canciones que rompen todas las expectativas tienen componentes aleatorios que ningún modelo puede capturar a partir de sus características observables.</p>
+
+```{r xgb_importancia, fig.height=5}
+imp_xgb <- xgb.importance(feature_names = colnames(x_train_mat), model = modelo_xgb)
+ggplot(head(imp_xgb, 12), aes(x = reorder(Feature, Gain), y = Gain)) +
+  geom_bar(stat = "identity", fill = "#ff6f00", alpha = 0.85, color = "#0a0a0a") +
+  coord_flip() +
+  labs(title = "XGBoost — Importancia de Variables (Gain)",
+       x = NULL, y = "Gain") +
+  tema_fe
+```
+
+<p class="fig-caption">Figura 17 — Importancia de variables en XGBoost medida por Gain, que cuantifica la reducción total del error que aporta cada variable en todos los árboles. Las variables de distribución en plataformas dominan el ranking, confirmando el hallazgo central del proyecto.</p>
+
+```{r xgb_confusion, fig.height=5}
+mat_xgb <- confusionMatrix(
+  factor(clasificar_exito(pred_xgb),           levels = c("Bajo","Medio","Alto","Viral")),
+  factor(clasificar_exito(datos_test_fe$streams), levels = c("Bajo","Medio","Alto","Viral"))
+)
+
+ggplot(as.data.frame(mat_xgb$table), aes(x = Reference, y = Prediction, fill = Freq)) +
+  geom_tile(color = "white", linewidth = 0.8) +
+  geom_text(aes(label = Freq), size = 6, fontface = "bold", color = "black") +
+  scale_fill_gradient(low = "#fff3e0", high = "#ff6f00") +
+  labs(title = "Matriz de Confusión — XGBoost",
+       subtitle = paste0("Accuracy: ", round(mat_xgb$overall["Accuracy"] * 100, 2), "%"),
+       x = "Categoría Real", y = "Categoría Predicha", fill = "Frecuencia") +
+  tema_fe
+```
+
+## SVM
+
+Las **Support Vector Machines** para regresión (SVR) buscan el hiperplano que contiene la mayor cantidad de datos dentro de un margen de error tolerable (epsilon-insensitive tube). El kernel radial (RBF) permite capturar relaciones no lineales proyectando los datos a un espacio de mayor dimensión. Una condición importante: SVM es sensible a la escala de las variables, por lo que todas las variables se centran y escalan antes del entrenamiento.
+
+```{r svm, fig.height=5}
+prep_svm <- preProcess(datos_train_fe %>% select(-streams),
+                       method = c("center", "scale"))
+
+train_svm <- predict(prep_svm, datos_train_fe)
+test_svm  <- predict(prep_svm, datos_test_fe)
+
+grid_svm <- expand.grid(
+  C     = c(0.1, 1, 10, 100),
+  sigma = c(0.001, 0.01, 0.1)
+)
+
+set.seed(42)
+modelo_svm <- train(
+  streams ~ .,
+  data      = train_svm,
+  method    = "svmRadial",
+  tuneGrid  = grid_svm,
+  trControl = control_cv,
+  metric    = "RMSE"
+)
+
+cat("Mejores parámetros SVM: C =", modelo_svm$bestTune$C,
+    "| sigma =", modelo_svm$bestTune$sigma, "\n")
+
+ggplot(modelo_svm) +
+  labs(title = "SVM — Tuning de C y sigma por CV",
+       x = "Costo (C)", y = "RMSE (Cross-Validation)") +
+  tema_fe
+
+pred_svm   <- predict(modelo_svm, test_svm)
+rmse_svm   <- rmse(datos_test_fe$streams, pred_svm)
+r2_svm     <- r2_calc(datos_test_fe$streams, pred_svm)
+
+cat("SVM — RMSE:", formatC(rmse_svm, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_svm * 100, 2), "%\n")
+
+mat_svm <- confusionMatrix(
+  factor(clasificar_exito(pred_svm),           levels = c("Bajo","Medio","Alto","Viral")),
+  factor(clasificar_exito(datos_test_fe$streams), levels = c("Bajo","Medio","Alto","Viral"))
+)
+
+ggplot(as.data.frame(mat_svm$table), aes(x = Reference, y = Prediction, fill = Freq)) +
+  geom_tile(color = "white", linewidth = 0.8) +
+  geom_text(aes(label = Freq), size = 6, fontface = "bold", color = "black") +
+  scale_fill_gradient(low = "#f3e5f5", high = "#6a1b9a") +
+  labs(title = "Matriz de Confusión — SVM",
+       subtitle = paste0("Accuracy: ", round(mat_svm$overall["Accuracy"] * 100, 2), "%"),
+       x = "Categoría Real", y = "Categoría Predicha", fill = "Frecuencia") +
+  tema_fe
+```
+
+<p class="fig-caption">Figura 18 — Tuning de C y sigma para SVM por CV de 5 folds. El mínimo de RMSE indica la combinación óptima de penalización y amplitud del kernel.</p>
+
+## Stacking
+
+El Stacking es un método de ensamble de dos niveles. En el **nivel 1**, tres modelos base — Random Forest tuneado, XGBoost y SVM — generan predicciones de forma independiente. En el **nivel 2**, un meta-learner (regresión lineal) aprende a combinar esas predicciones de forma óptima.
+
+El detalle crítico es que las predicciones del nivel 1 se generan mediante **out-of-fold (OOF)**: cada modelo base se entrena sobre 4 folds y predice el fold restante, rotando hasta cubrir todos los datos de entrenamiento. Esto garantiza que el meta-learner nunca ve predicciones contaminadas por datos que el modelo base ya vio.
+
+```{r stacking}
+set.seed(42)
+folds_stack <- createFolds(datos_train_fe$streams, k = 5, list = TRUE)
+
+oof_rf  <- numeric(nrow(datos_train_fe))
+oof_xgb <- numeric(nrow(datos_train_fe))
+oof_svm <- numeric(nrow(datos_train_fe))
+
+for (fold in folds_stack) {
+  tr_idx  <- setdiff(seq_len(nrow(datos_train_fe)), fold)
+  val_idx <- fold
+
+  # RF
+  rf_fold <- randomForest(
+    streams ~ .,
+    data  = datos_train_fe[tr_idx, ],
+    ntree = 300,
+    mtry  = modelo_rf_tuned$bestTune$mtry
+  )
+  oof_rf[val_idx] <- predict(rf_fold, datos_train_fe[val_idx, ])
+
+  # XGBoost
+  d_tr  <- xgb.DMatrix(
+    data  = as.matrix(datos_train_fe[tr_idx,  ] %>% select(-streams)),
+    label = datos_train_fe$streams[tr_idx] / escala_xgb
+  )
+  d_val <- xgb.DMatrix(
+    data = as.matrix(datos_train_fe[val_idx, ] %>% select(-streams))
+  )
+  xgb_fold <- xgb.train(params = params_xgb, data = d_tr,
+                         nrounds = mejor_xgb$best_nrounds, verbose = 0)
+  oof_xgb[val_idx] <- predict(xgb_fold, d_val) * escala_xgb
+
+  # SVM
+  prep_fold <- preProcess(datos_train_fe[tr_idx, ] %>% select(-streams),
+                           method = c("center", "scale"))
+  tr_s  <- predict(prep_fold, datos_train_fe[tr_idx,  ])
+  val_s <- predict(prep_fold, datos_train_fe[val_idx, ])
+  svm_fold <- svm(streams ~ ., data = tr_s,
+                  kernel = "radial",
+                  cost   = modelo_svm$bestTune$C,
+                  gamma  = modelo_svm$bestTune$sigma)
+  oof_svm[val_idx] <- predict(svm_fold, val_s)
+}
+
+cat("Predicciones OOF generadas.\n")
+
+meta_train <- data.frame(
+  pred_rf  = oof_rf,
+  pred_xgb = oof_xgb,
+  pred_svm = oof_svm,
+  real     = datos_train_fe$streams
+)
+
+meta_model <- lm(real ~ pred_rf + pred_xgb + pred_svm, data = meta_train)
+cat("Pesos del meta-learner:\n")
+print(round(coef(meta_model), 4))
+
+meta_test <- data.frame(
+  pred_rf  = predict(modelo_rf_tuned,    datos_test_fe),
+  pred_xgb = pred_xgb,
+  pred_svm = predict(modelo_svm, test_svm)
+)
+
+pred_stack   <- predict(meta_model, meta_test)
+rmse_stack   <- rmse(datos_test_fe$streams, pred_stack)
+r2_stack     <- r2_calc(datos_test_fe$streams, pred_stack)
+
+cat("\nStacking (RF + XGBoost + SVM)\n")
+cat("RMSE:", formatC(rmse_stack, format="f", big.mark=",", digits=0),
+    "| R²:", round(r2_stack * 100, 2), "%\n")
+
+mat_stack <- confusionMatrix(
+  factor(clasificar_exito(pred_stack),             levels = c("Bajo","Medio","Alto","Viral")),
+  factor(clasificar_exito(datos_test_fe$streams),  levels = c("Bajo","Medio","Alto","Viral"))
+)
+```
+
+```{r stacking_confusion, fig.height=5}
+ggplot(as.data.frame(mat_stack$table), aes(x = Reference, y = Prediction, fill = Freq)) +
+  geom_tile(color = "white", linewidth = 0.8) +
+  geom_text(aes(label = Freq), size = 6, fontface = "bold", color = "black") +
+  scale_fill_gradient(low = "#e8eaf6", high = "#283593") +
+  labs(title = "Matriz de Confusión — Stacking",
+       subtitle = paste0("Accuracy: ", round(mat_stack$overall["Accuracy"] * 100, 2), "%"),
+       x = "Categoría Real", y = "Categoría Predicha", fill = "Frecuencia") +
+  tema_fe
+```
+
+Los pesos del meta-learner revelan cómo cada modelo base contribuye al ensamble. Un peso alto indica que ese modelo aporta información que los otros no capturan de la misma forma.
+
+---
+
+# Torneo Final — Las Tres Fases
+
+## Tabla de posiciones completa
+
+```{r tabla_torneo, results='asis'}
+tabla_torneo <- data.frame(
+  Fase   = c(
+    "Parte 1","Parte 1","Parte 1",
+    "Fase 1", "Fase 1", "Fase 1",
+    "Fase 2", "Fase 2", "Fase 2",
+    "Fase 3", "Fase 3", "Fase 3", "Fase 3", "Fase 3"
+  ),
+  Modelo = c(
+    "Reg. Lineal P1","Árbol P1","RF P1",
+    "Reg. Lineal + FE","Árbol + FE","RF + FE",
+    "Reg. Lineal Tuneada","Árbol Tuneado","RF Tuneado",
+    "Lasso","Ridge","XGBoost","SVM","Stacking"
+  ),
+  RMSE = c(
+    resultados_p1$lineal$rmse, resultados_p1$arbol$rmse, resultados_p1$rf$rmse,
+    rmse_lm_fe,   rmse_arbol_fe,   rmse_rf_fe,
+    rmse_lm_step, rmse_arbol_tuned, rmse_rf_tuned,
+    rmse_lasso, rmse_ridge, rmse_xgb, rmse_svm, rmse_stack
+  ),
+  R2 = c(
+    resultados_p1$lineal$r2, resultados_p1$arbol$r2, resultados_p1$rf$r2,
+    r2_lm_fe,   r2_arbol_fe,   r2_rf_fe,
+    r2_lm_step, r2_arbol_tuned, r2_rf_tuned,
+    r2_lasso, r2_ridge, r2_xgb, r2_svm, r2_stack
+  ) * 100,
+  Accuracy = c(
+    resultados_p1$lineal$accuracy, resultados_p1$arbol$accuracy, resultados_p1$rf$accuracy,
+    mat_lm_fe$overall["Accuracy"],
+    mat_arbol_fe$overall["Accuracy"],
+    mat_rf_fe$overall["Accuracy"],
+    mat_lm_step$overall["Accuracy"],
+    mat_arbol_tuned$overall["Accuracy"],
+    mat_rf_tuned$overall["Accuracy"],
+    mat_lasso$overall["Accuracy"],
+    mat_ridge$overall["Accuracy"],
+    mat_xgb$overall["Accuracy"],
+    mat_svm$overall["Accuracy"],
+    mat_stack$overall["Accuracy"]
+  ) * 100
+)
+
+tabla_t_fmt <- tabla_torneo %>%
+  arrange(RMSE) %>%
+  mutate(Posicion = row_number())
+
+cat('<table class="p1-table" style="width:100%">',
+    '<thead><tr>',
+    '<th>#</th><th>Fase</th><th>Modelo</th><th>RMSE</th><th>R²</th><th>Accuracy</th>',
+    '</tr></thead><tbody>')
+for (i in seq_len(nrow(tabla_t_fmt))) {
+  bg <- if (i == 1) "background:#0d1f14;color:#1DB954;font-weight:700" else if (i %% 2 == 0) "background:#0a0a0a;color:#e8e8e8" else "background:#0f0f0f;color:#e8e8e8"
+  cat(sprintf('<tr style="%s"><td style="text-align:center">%s</td><td>%s</td><td>%s</td><td style="text-align:right">%s</td><td style="text-align:right">%s</td><td style="text-align:right">%s</td></tr>',
+              bg,
+              tabla_t_fmt$Posicion[i],
+              tabla_t_fmt$Fase[i],
+              tabla_t_fmt$Modelo[i],
+              formatC(tabla_t_fmt$RMSE[i], format="f", big.mark=",", digits=0),
+              paste0(round(tabla_t_fmt$R2[i], 2), "%"),
+              paste0(round(tabla_t_fmt$Accuracy[i], 2), "%")))
+}
+cat('</tbody></table>')
+```
+
+## Comparativa visual
+
+```{r grafico_torneo_rmse, fig.height=8}
+colores_torneo <- c(
+  "Reg. Lineal P1"      = "#ffccbc",
+  "Árbol P1"            = "#c8e6c9",
+  "RF P1"               = "#b3e5fc",
+  "Reg. Lineal + FE"    = "#ef9a9a",
+  "Árbol + FE"          = "#a5d6a7",
+  "RF + FE"             = "#90caf9",
+  "Reg. Lineal Tuneada" = "#e53935",
+  "Árbol Tuneado"       = "#2e7d32",
+  "RF Tuneado"          = "#0277bd",
+  "Lasso"               = "#ff7043",
+  "Ridge"               = "#5c6bc0",
+  "XGBoost"             = "#ff6f00",
+  "SVM"                 = "#6a1b9a",
+  "Stacking"            = "#1a237e"
+)
+
+tabla_torneo$Modelo <- factor(
+  tabla_torneo$Modelo,
+  levels = tabla_torneo$Modelo[order(tabla_torneo$RMSE, decreasing = TRUE)]
+)
+
+ggplot(tabla_torneo, aes(x = Modelo, y = RMSE, fill = Modelo)) +
+  geom_bar(stat = "identity", alpha = 0.9, color = "black", width = 0.7) +
+  geom_text(aes(label = formatC(RMSE, format="f", big.mark=",", digits=0)),
+            hjust = -0.05, fontface = "bold", size = 2.8, color = "#e8e8e8") +
+  coord_flip() +
+  scale_fill_manual(values = colores_torneo) +
+  scale_y_continuous(labels = scales::comma, expand = expansion(mult = c(0, 0.18))) +
+  labs(
+    title    = "Torneo Final — Comparativa de RMSE (Parte 1 · Fase 1 · Fase 2 · Fase 3)",
+    subtitle = "Menor RMSE = Mejor modelo",
+    x = NULL, y = "RMSE"
+  ) +
+  tema_fe + theme(legend.position = "none")
+```
+
+<p class="fig-caption">Figura 19 — Comparativa de RMSE de los 14 modelos del torneo. La progresión de colores refleja las fases: tonos más claros = Parte 1 y Fase 1, tonos más saturados = Fase 2 y Fase 3. El patrón visual muestra que cada fase acumuló mejoras sobre la anterior.</p>
+
+```{r grafico_torneo_r2, fig.height=8}
+tabla_r2 <- tabla_torneo %>%
+  mutate(Modelo = factor(Modelo, levels = Modelo[order(R2)]))
+
+ggplot(tabla_r2, aes(x = Modelo, y = R2, fill = Modelo)) +
+  geom_bar(stat = "identity", alpha = 0.9, color = "black", width = 0.7) +
+  geom_text(aes(label = paste0(round(R2, 2), "%")),
+            hjust = -0.05, fontface = "bold", size = 2.8, color = "#e8e8e8") +
+  coord_flip() +
+  scale_fill_manual(values = colores_torneo) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(
+    title    = "Torneo Final — Comparativa de R²",
+    subtitle = "Mayor R² = Mayor varianza explicada",
+    x = NULL, y = "R² (%)"
+  ) +
+  tema_fe + theme(legend.position = "none")
+```
+
+```{r grafico_torneo_acc, fig.height=8}
+tabla_acc <- tabla_torneo %>%
+  mutate(Modelo = factor(Modelo, levels = Modelo[order(Accuracy)]))
+
+ggplot(tabla_acc, aes(x = Modelo, y = Accuracy, fill = Modelo)) +
+  geom_bar(stat = "identity", alpha = 0.9, color = "black", width = 0.7) +
+  geom_text(aes(label = paste0(round(Accuracy, 2), "%")),
+            hjust = -0.05, fontface = "bold", size = 2.8, color = "#e8e8e8") +
+  coord_flip() +
+  scale_fill_manual(values = colores_torneo) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(
+    title    = "Torneo Final — Comparativa de Accuracy",
+    subtitle = "Mayor Accuracy = Mejor clasificación por rangos de éxito",
+    x = NULL, y = "Accuracy (%)"
+  ) +
+  tema_fe + theme(legend.position = "none")
+```
+
+<p class="fig-caption">Figuras 20-21 — R² y Accuracy del torneo final. Es importante notar que el modelo con menor RMSE no es necesariamente el de mayor Accuracy: RMSE mide el error promedio en la escala continua de streams, mientras que Accuracy mide la clasificación correcta en las cuatro categorías de éxito.</p>
+
+## Resumen de hallazgos por fase
+
+```{r resumen_fases}
+best_p1    <- min(resultados_p1$lineal$rmse, resultados_p1$arbol$rmse, resultados_p1$rf$rmse)
+best_fase1 <- min(rmse_lm_fe, rmse_arbol_fe, rmse_rf_fe)
+best_fase2 <- min(rmse_lm_step, rmse_arbol_tuned, rmse_rf_tuned)
+best_fase3 <- min(rmse_lasso, rmse_ridge, rmse_xgb, rmse_svm, rmse_stack)
+
+cat("Impacto de cada fase (mejor RMSE dentro de la fase):\n\n")
+cat("  Parte 1 (baseline):      ", formatC(best_p1,    format="f", big.mark=",", digits=0), "\n")
+cat("  Fase 1 (+ FE):           ", formatC(best_fase1, format="f", big.mark=",", digits=0),
+    " | Mejora:", formatC(best_p1 - best_fase1, format="f", big.mark=",", digits=0), "\n")
+cat("  Fase 2 (+ Tuning):       ", formatC(best_fase2, format="f", big.mark=",", digits=0),
+    " | Mejora:", formatC(best_fase1 - best_fase2, format="f", big.mark=",", digits=0), "\n")
+cat("  Fase 3 (+ Avanzados):    ", formatC(best_fase3, format="f", big.mark=",", digits=0),
+    " | Mejora:", formatC(best_fase2 - best_fase3, format="f", big.mark=",", digits=0), "\n")
+cat("\n  Mejora total vs Parte 1: -",
+    formatC(best_p1 - best_fase3, format="f", big.mark=",", digits=0), "streams de RMSE\n")
+
+# Resumen del ganador
+ganador <- tabla_torneo[which.min(tabla_torneo$RMSE), ]
+cat("\n============================================\n")
+cat("MODELO GANADOR:", as.character(ganador$Modelo), "\n")
+cat("RMSE:          ", formatC(ganador$RMSE, format="f", big.mark=",", digits=0), "\n")
+cat("R²:            ", round(ganador$R2, 2), "%\n")
+cat("Accuracy:      ", round(ganador$Accuracy, 2), "%\n")
+```
+
+---
+
+# Conclusiones
+
+## Qué aportó cada decisión
+
+**Feature Engineering** fue la decisión con mayor impacto por unidad de esfuerzo. Sin cambiar ningún algoritmo ni hiperparámetro, las variables derivadas mejoraron los tres modelos simultáneamente. El hallazgo más interesante es que `score_popularidad` — una suma ponderada de señales multiplataforma — captura información que ninguna variable individual podía expresar.
+
+**Tuning por CV** resolvió el problema estructural más grave: la clase "Bajo" con Sensitivity = 0 en el árbol de decisión. Más que mejorar números, el tuning corrigió un defecto que hacía al modelo inutilizable para identificar canciones de bajo rendimiento. En el Random Forest, la reducción de la brecha OOB vs Test indica un modelo más honesto en su estimación del error.
+
+**Lasso y Ridge** confirmaron que el enfoque lineal tiene un techo definido para este problema. Su inclusión no fue un error — fue la forma rigurosa de demostrar que la estructura no lineal del éxito musical requiere algoritmos más sofisticados.
+
+**XGBoost** y el **Stacking** representan el estado del arte en datos tabulares. XGBoost se beneficia directamente del feature engineering (sus variables de mayor Gain incluyen las derivadas) y del proceso de tuning en dos fases. El Stacking demuestra que combinar modelos con fortalezas distintas — RF para estabilidad, XGBoost para corrección secuencial, SVM para márgenes suaves — puede superar a cualquiera de ellos por separado.
+
+## Hallazgo central del proyecto
+
+```{=html}
+<div class="callout">
+  <span class="callout-title">Conclusión</span>
+  <p>A lo largo de las dos partes del proyecto, una señal se repite de forma consistente en todos los modelos y todas las métricas de importancia: <strong>la distribución en plataformas determina el éxito en streams más que cualquier característica musical</strong>. El BPM, la bailabilidad, la energía — ninguna variable de audio aparece en los primeros lugares de importancia en ningún modelo. Las canciones no acumulan miles de millones de reproducciones porque suenan mejor; las acumulan porque están en el lugar correcto dentro del ecosistema de plataformas en el momento correcto. El éxito musical en la era del streaming es, en gran medida, un problema de distribución y visibilidad, no de composición.</p>
+</div>
+```
+
+---
+
+*Quiñones Sánchez Jonathan Ezequiel · Proyecto Máquinas de Aprendizaje · BUAP FCC*
